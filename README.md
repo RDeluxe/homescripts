@@ -1,55 +1,46 @@
 # Homescripts README
 
-This is my configuration that works for me the best for my use case of an all in one media server. This is not meant to be a tutorial by any means as it does require some knowledge to get setup. I'm happy to help out as best as I can and welcome any updates/fixes/pulls to make it better and more helpful to others.
+This repo was forked from [Animosity 22 repository](https://github.com/animosity22/homescripts).
 
-I use the latest rclone stable version downloaded direclty via the [script install](https://rclone.org/install/#script-installation) as package managers are frequently out of date and not maintained. I see no need to use docker for my rclone setup as it's a single binary and easier to maintain and use without being in a docker. 
+This is my configuration that works for me the best for my use case of an all in one media server. This is not meant to be a tutorial by any means as it does require some knowledge to get setup.
 
-[Change Log](https://github.com/animosity22/homescripts/blob/master/Changes.MD)
+I use the latest rclone stable version downloaded direclty via the [script install](https://rclone.org/install/#script-installation) as package managers are frequently out of date and not maintained. I see no need to use docker for my rclone setup as it's a single binary and easier to maintain and use without being in a docker.
+
+[Change Log](https://github.com/RDeluxe/homescripts/blob/master/Changes.MD)
 
 ## Home Configuration
 
-- Verizon Gigabit Fios
-- Dropbox with encrypted media folder
-- Linux
-- Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
-- 32 GB of Memory
-- 1TB - root/system disk
-- 2TB SSD for rclone disk cache
+- And old PC
+- OneDrive Business for cloud
+- Ubuntu 22.04
+- Intel(R) Core(TM) i5-3570k CPU @ 3.40GHz
+- 16 GB of Memory
+- 250GB - SSD root/system disk
 - Spinning disk for big storage pools
 
-I adjusted my mounts on my Linux machine to use BTRFS over EXT4/XFS and found a huge performance improvement.
+## Services
 
-/etc/fstab
+- Roon server installed via their nice installer
+- Docker
+- rclone (native)
+- Plex (on docker)
+- Deluge (on docker)
+- Steam link
 
-```bash
-/dev/disk/by-uuid/f12cd4cf-d9e5-4022-8d16-5ccde5c4273e / btrfs defaults 0 1
-/dev/disk/by-uuid/7B20-481C /boot/efi vfat defaults 0 1
-
-# SSD
-UUID=7f93b2af-ad87-4db1-aa82-682136cec07a /cache auto defaults 0 0
-UUID=e065dcaa-e548-45e6-a226-f5ea83b5ab22 /data auto defaults 0 0
-```
-
-## Dropbox
-
-I migrated away from Google Drive to Dropbox as there still is an Enterprise Standard plan that seems to be unlimited space but I disliked
-the upload and download limits so I made the change. Dropbox is similiar to API usage compared to Google but there is not a pacer by default
-I work around that by setting a limit for transactions per second on the API via my mount command. API usage in Dropbox is tied to each
-application registration so I seperate out my apps and use one for uploading, one for movies and one for television shows as to never
-overload a particular one and allow easy reporting in the console.
+# Cloud and media configuration
 
 ## My Workflow
 
 The design goals for the workflow are to limit the amount of applications that being used and limit the amount of scripts that are being used as part of the process. That was the reason to remove mergerfs and the upload script from the workflow. This does remove the ability to use hard links in the process but the trade off of having duplicated files for a short period outweighed the con.
 
-Worfklow Pattern:
+Worfklow Pattern (TBD):
+
 1. Sonarr/Radarr identify a file to be downloaded
 2. qBit/NZBget downloads a file to local spinning disk (/data)
 3. Sonarr/Radarr see the download is complete, file is copied from spinning disk (/data) to the respective rclone mount (/media/Movies or media/TV)
 4. Rclone waits the delay time (1 hour in this setup) and uploads the file to the remote
 
 This workflow has a lot less moving parts and reduces the amount of things that can break. There is a local cache drive for rclone (/cache) that is used for the vfs-cache-mode full that stores the uploads before they get uploaded and any downloaded cache files. The only breakpoint here is if the cache area gets full, but generally that should not happen as files are uploaded within an hour and it is a 2TB SSD in this setup that should offer plenty of space. If that disk is too small, there can be issue with it filling up and creating an issue. Disk is cheap enough though that should not be a problem.
-
 
 ### Installation
 
@@ -82,23 +73,25 @@ user_allow_other
 
 ```
 
-Two rclone mounts are used and this could be expanded if there was a need for multiple mount points. The goal here is each mount point for unique for each "pair" of applications uses. As an example, Sonarr/Plex use the /media/TV mount and point to that specifically. This allows for downloads and uploads to work on a mount point. Any uploads are handled by rclone without the need for an additional upload script. The upload delay is configurable and 1 hour is the parameter being used here.
+Two rclone mounts are used and this could be expanded if there was a need for multiple mount points. The goal here is each mount point for unique for each "pair" of applications uses. As an example, Sonarr/Plex use the /media/films mount and point to that specifically. This allows for downloads and uploads to work on a mount point. Any uploads are handled by rclone without the need for an additional upload script. The upload delay is configurable and 1 hour is the parameter being used here.
+
+The "films" folder is badly named, it stores both movies and shows.
 
 ```bash
-/media/Movies (rclone mount with vfs cache mode full)
-/media/TV (rclone mount with vfs cache mode full)
+/media/films (rclone mount with vfs cache mode full)
+/media/music (rclone mount with vfs cache mode full)
 ```
 
-My `rclone.conf` has an entry multiple entries for Dropbox as unlike Google that does rate limiting per user, Dropbox does it per application that is registered so there is an application registration for each mount point to break up the API hits. As of this time, the sweet spot for Dropbox is 12 TPS per application registration so each of my mounts takes that into account. The same encryption password is used for both in my case for ease of use and that is not a requirement.
+My `rclone.conf` has an only one entry, for my OneDrive account.
 
-My rclone looks like: [rclone.conf](https://github.com/animosity22/homescripts/blob/master/rclone.conf)
+My rclone looks like: [rclone.conf](https://github.com/RDeluxe/homescripts/blob/master/rclone.conf)
 
 They are all mounted via systemd scripts. rclone is mounted first followed by the mergerfs mount.
 
 My media starts up items in order:
 
-1) [rclone-movies service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone-movies.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
-2) [rclone-tv service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone-tv.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
+1. [rclone-films service](https://github.com/RDeluxe/homescripts/blob/master/systemd/rclone-films.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
+2. [rclone-music service](https://github.com/RDeluxe/homescripts/blob/master/systemd/rclone-music.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
 
 ### Docker
 
@@ -110,7 +103,7 @@ Docker install for each operating system can be instructions are here: [Docker I
 
 The docker-compose.yml below is what is being used for multiple applications as Sonarr, Radarr and Plex are included below. The key for hardware support is ensuring that /dev/dri is mapped and a single UID/GID is consistent in the configuration as UID=1000 and GID=1000 is the only user configured on my single server setup.
 
-The docker setup is configured in /opt/docker and all the data for every application is stored in /opt/docker/data in this configuration. That is backed up on a daily basis to another location and occassinally to cloud storage depending on the risk appetite. 
+The docker setup is configured in /opt/docker and all the data for every application is stored in /opt/docker/data in this configuration. That is backed up on a daily basis to another location and occassinally to cloud storage depending on the risk appetite.
 
 #### My Docker-Compose
 
@@ -173,7 +166,7 @@ After=rclone-movies.service rclone-tv.service
 Requires=rclone-movies.service rclone-tv.service
 ```
 
-I use docker compose for all my serivces and have portainer there for easier looking at things when I don't want to connect to a console. I use the same user ID/groups for my docker to simpify permissions. My plex compose is basic and looks like:
+I use docker compose for all my services and have portainer there for easier looking at things when I don't want to connect to a console. I use the same user ID/groups for my docker to simpify permissions. My plex compose is basic and looks like:
 
 ```bash
   plex:
@@ -227,4 +220,8 @@ These tips and more for Linux can be found at the [Plex Forum Linux Tips](https:
 
 I use Caddy to server majority of my things as I plug directly into GitHub oAuth2 for authentication. I can toggle CDN on and off via the proxy in the DNS.
 
-My configuration is [here](https://github.com/animosity22/homescripts/blob/master/PROXY.MD).
+My configuration is [here](https://github.com/RDeluxe/homescripts/blob/master/PROXY.MD).
+
+## TODO
+
+- adjust my mounts on my Linux machine to use BTRFS over EXT4/XFS and found a huge performance improvement.
