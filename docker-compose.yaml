@@ -1,5 +1,18 @@
 version: '3'
 services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    network_mode: host
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/pierrick/ContainersData/portainer-data:/data
+    ports:
+      - 9000:9000
   # sonarr:
   #   image: lscr.io/linuxserver/sonarr:latest
   #   container_name: sonarr
@@ -33,7 +46,7 @@ services:
     container_name: plex
     network_mode: host
     devices:
-     - /dev/dri:/dev/dri
+      - /dev/dri:/dev/dri
     privileged: true
     environment:
       - PUID=1000
@@ -41,6 +54,6 @@ services:
       - VERSION=docker
     volumes:
       - /opt/docker/data/plex:/config
-      - /media/Movies:/media/Movies
-      - /media/TV:/media/TV
+      - /media/films/Movies:/media/Movies
+      - /media/films/Shows:/media/TV
     restart: unless-stopped
