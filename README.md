@@ -4,9 +4,9 @@ This repo was forked from [Animosity 22 repository](https://github.com/animosity
 
 This is my configuration that works for me the best for my use case of an all in one media server. This is not meant to be a tutorial by any means as it does require some knowledge to get setup.
 
-I use the latest rclone stable version downloaded direclty via the [script install](https://rclone.org/install/#script-installation) as package managers are frequently out of date and not maintained. I see no need to use docker for my rclone setup as it's a single binary and easier to maintain and use without being in a docker.
-
 [Change Log](https://github.com/RDeluxe/homescripts/blob/master/Changes.MD)
+
+Reading through this doc will help you during the setup, but most files are pretty self explanatory.
 
 ## Home Configuration
 
@@ -36,6 +36,8 @@ I use the latest rclone stable version downloaded direclty via the [script insta
 Installing roon can be done via their installer, nothing special here
 
 ## Rclone
+
+I use the latest rclone stable version via my package manager. I see no need to use docker for my rclone setup as it's a single binary and easier to maintain and use without being in a docker.
 
 Rclone is used to sync my local folders to OneDrive. This is cool because Roon and Plex can access those folders and download the files on demand, but after a while the local files will be cleaned.
 
@@ -103,7 +105,7 @@ My media starts up items in order:
 
 ⚠️ The systemd files need to be enabled via `systemclt`, and be aware that paths may need to be modified
 
-# 2. Docker services
+# 2. Docker containers
 
 With the exception of rclone and Roon, all applications are setup in a docker-compose and leverage docker for ease of use, maintenance and upgrades. With Plex, it is advised to leverage a docker as for ensuring that hardware transcoding and HDR tone mapping support, only certain Linux OS flavors work easy without docker. By putting Plex in a docker, there is minimal configuration that needs to be done to get full hardware support as depending on hardware, it does get complex.
 
@@ -114,6 +116,10 @@ Docker install for each operating system can be instructions are here: [Docker I
 The docker-compose.yml in this repo is what is being used for multiple applications as Sonarr, Radarr and Plex. The key for hardware support is ensuring that /dev/dri is mapped and a single UID/GID is consistent in the configuration as UID=1000 and GID=1000 is the only user configured on my single server setup.
 
 The docker setup is configured in /opt/docker and all the data for every application is stored in /opt/docker/data in this configuration. That is backed up on a daily basis to another location and occassinally to cloud storage depending on the risk appetite.
+
+## Docker compose service
+
+The [docker-compose service](https://github.com/RDeluxe/homescripts/blob/master/systemd/docker-compose.service) auto start our docker compose configuration at startup.
 
 ## Docker service override
 
