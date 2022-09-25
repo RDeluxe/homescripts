@@ -23,9 +23,9 @@ I use the latest rclone stable version downloaded direclty via the [script insta
 - Roon server installed via their nice installer
 - Docker
 - rclone (native)
-- portainer (in Docker)
-- Plex (in docker)
-- qbittorrent (in docker)
+- portainer (in Docker) : http://192.168.1.132:9000/
+- Plex (in docker) : http://192.168.1.132:32400/web/
+- qbittorrent (in docker) : http://192.168.1.132:8088/
 - nordvpn (in docker)
 - Steam link
 
