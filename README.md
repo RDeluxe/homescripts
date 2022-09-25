@@ -107,56 +107,6 @@ The docker setup is configured in /opt/docker and all the data for every applica
 
 #### My Docker-Compose
 
-```bash
-version: '3'
-services:
-  sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
-    volumes:
-      - /opt/docker/data/sonarr:/config
-      - /media/TV:/media/TV
-      - /data:/data
-    ports:
-      - 8989:8989
-    restart: unless-stopped
-      radarr:
-    image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
-    volumes:
-      - /opt/docker/data/radarr:/config
-      - /media/Movies:/media/Movies
-      - /data:/data
-    ports:
-      - 7878:7878
-    restart: unless-stopped
-      plex:
-    image: lscr.io/linuxserver/plex:latest
-    container_name: plex
-    network_mode: host
-    devices:
-     - /dev/dri:/dev/dri
-    privileged: true
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - VERSION=docker
-      - TZ=America/New_York
-    volumes:
-      - /opt/docker/data/plex:/config
-      - /media/Movies:/media/Movies
-      - /media/TV:/media/TV
-    restart: unless-stopped
-```
-
 The override below forces the docker server to require the rclone mounts and if the rclone mounts stop, systemd will stop all the docker services that are running. This allow the dependencies to be done to ensure that the applications do not lose media and stop if an issue with rclone occurs.
 
 ```bash
@@ -183,8 +133,8 @@ I use docker compose for all my services and have portainer there for easier loo
       - TZ=America/New_York
     volumes:
       - /opt/docker/data/plex:/config
-      - /media/Movies:/media/Movies
-      - /media/TV:/media/TV
+      - /media/films/Movies:/media/Movies
+      - /media/films/Shows:/media/TV
     restart: unless-stopped
 ```
 
