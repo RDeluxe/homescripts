@@ -13,6 +13,39 @@ services:
       - /home/pierrick/ContainersData/portainer-data:/data
     ports:
       - 9000:9000
+  vpn:
+    image: ghcr.io/bubuntux/nordvpn
+    cap_add:
+      - NET_ADMIN # Required
+      - NET_RAW # Required
+    environment:
+      # Review https://github.com/bubuntux/nordvpn#environment-variables
+      - USER=username # Required
+      - "PASS=pas$word" # Required
+      - CONNECT=France
+      - TECHNOLOGY=NordLynx
+      - NETWORK=192.168.1.0/24 # So it can be accessed within the local network
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    network_mode: service:vpn
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - /home/pierrick/ContainersData/deluge-data/config:/config
+      - /home/pierrick/ContainersData/deluge-data/downloads:/downloads
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
   # sonarr:
   #   image: lscr.io/linuxserver/sonarr:latest
   #   container_name: sonarr
