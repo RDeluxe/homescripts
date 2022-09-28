@@ -13,6 +13,10 @@ services:
       - /home/pierrick/ContainersData/portainer-data:/data
     ports:
       - 9000:9000
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+      - traefik.http.routers.portainer.rule=Host(`portainer.rindoon.duckdns.org`)
   vpn:
     image: ghcr.io/bubuntux/nordvpn
     container_name: nordpvn
@@ -30,14 +34,50 @@ services:
       - 8088:8088
       - 6881:6881
       - 6881:6881/udp
+  proxy:
+    image: traefik:v2.8 # Review traefik documentation https://doc.traefik.io/traefik/ 
+    container_name: traefik
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=letsencrypt
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=pierrick.bignet@gmail.com # Replace with your email
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /home/pierrick/ContainersData/traefik/letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+  domain:
+    image: ghcr.io/linuxserver/duckdns # Review doc https://github.com/linuxserver/docker-duckdns
+    container_name: duckdns
+    environment:
+      - TZ=Europe/Paris
+      - TOKEN=a668c852-28b5-4f62-8603-7ce0e7acb6f6 # Required
+      - SUBDOMAINS=rindoon # Required
+      - PUID=1000 #optional
+      - PGID=1000 #optional      
+    restart: unless-stopped
   torrent:
     image: linuxserver/qbittorrent:latest
     container_name: qbitwireguard
     network_mode: service:vpn
     environment:
       - WEBUI_PORT=8088
-      - PUID=1026
-      - PGID=101
+      - PUID=1000
+      - PGID=1000
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.torrent.loadbalancer.server.port=8088
+      - traefik.http.routers.torrent.rule=Host(`torrent.rindoon.duckdns.org`)
     volumes:
       - /home/pierrick/ContainersData/qbittorrent-data/config:/config
       - /home/pierrick/ContainersData/qbittorrent-data/downloads:/downloads
@@ -75,7 +115,10 @@ services:
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
-    network_mode: host
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.plex.loadbalancer.server.port=32400
+      - traefik.http.routers.plex.rule=Host(`plex.rindoon.duckdns.org`)
     devices:
       # /dev/dri is a must for hardware transocding.
       - /dev/dri:/dev/dri
