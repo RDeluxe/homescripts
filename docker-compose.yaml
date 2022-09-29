@@ -3,7 +3,6 @@ services:
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
-    network_mode: host
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -131,4 +130,6 @@ services:
       - /opt/docker/data/plex:/config
       - /media/films/Movies:/media/Movies
       - /media/films/Shows:/media/TV
+    ports:
+      - 32400:32400
     restart: unless-stopped
